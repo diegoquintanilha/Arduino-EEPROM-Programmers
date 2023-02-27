@@ -1,15 +1,15 @@
 /*
- * Para programar o EEPROM:
- * Desconectar/conectar os EEPROM da placa quando o led estiver piscando, com:
- * 		todos os pinos de endereço ligados nos outputs dos shift registers,
- * 		todos os pinos de dados ligados nas saídas de I0 a I7 do arduino
- * 		o pino CE ligado na saída REC do arduino
- * Resetar o arduino para iniciar o processo
- * Enquanto o led estiver piscando, conectar o pino OE em 12V (>11.75 e <12.25)
- * Led vai piscar rápido, indicando que está prestes a iniciar a gravação
- * Led apaga enquanto o EEPROM está sendo programado
- * Ao terminar de programar, led acende continuamente por 3 segundos, e então volta a piscar
- * Um pouco mais que 15 segundos pra programar cada EEPROM
+ * In order to program the EEPROM:
+ * Disconnect the previous EEPROM from the board and connect the next one while the LED is blinking. 
+ * 		- All address pins must be connected to the shift register outputs.
+ * 		- All data pins must be connected to the arduino output pins labeled I0 to I7.
+ * 		- The EEPROM CE pin must be connected to the arduino output labeled REC.
+ * Reset the arduino to start the process.
+ * While the LED is blinking, connect the EEPROM OE pin on 12V (11.75 < voltage <12.25).
+ * LED will blink faster, indicating that the programming is imminent.
+ * LED will turn off while EEPROM is being programmed.
+ * When programming is finished, LED will turn on continuously for 3 seconds, and then will go back to blinking.
+ * About 15 seconds total for each EEPROM to be fully programmed.
 */
 
 #define CLK 2
@@ -24,9 +24,9 @@
 #define I6 10
 #define I7 11
 
-void setup() {
-
-	// setup
+void setup()
+{
+	// Setup
 	pinMode(LED_BUILTIN, OUTPUT);
 	pinMode(CLK, OUTPUT);
 	digitalWrite(CLK, LOW);
@@ -35,27 +35,30 @@ void setup() {
 	digitalWrite(REC, HIGH);
 	for (int pin = I0; pin <= I7; pin++) pinMode(pin, OUTPUT);
 
-	// led pisca 5 vezes, é o momento de ligar 12V onde precisa
-	for (int i = 0; i < 6; i++) {
+	// LED blinks 5 times, time to connect 12V where needed.
+	for (int i = 0; i < 6; i++)
+	{
 		digitalWrite(LED_BUILTIN, HIGH);
 		delay(1000);
 		digitalWrite(LED_BUILTIN, LOW);
 		delay(1000);		
 	}
 
-	// pisca rápido porque está prestes a começar
-	for (int i = 0; i < 6; i++) {
+	// Blinks fast to indicate it is about to begin.
+	for (int i = 0; i < 6; i++)
+	{
 		digitalWrite(LED_BUILTIN, HIGH);
 		delay(300);
 		digitalWrite(LED_BUILTIN, LOW);
 		delay(300);		
 	}
 	
-	// loop que passa por todos os endereços
-	for (long i = 0L; i < 65536L; i++) {
-
-		// pegando cada bit do endereço atual e colocando nos shift registers
-		for (long j = 0L; j < 16L; j++) {
+	// Loop that goes through every address.
+	for (long i = 0L; i < 65536L; i++)
+	{
+		// Get every bit of current address and put on shift registers.
+		for (long j = 0L; j < 16L; j++)
+		{
 			digitalWrite(ADR, (i & (1L << j)) ? HIGH : LOW);
 			delayMicroseconds(10);
 			digitalWrite(CLK, HIGH);
@@ -64,22 +67,23 @@ void setup() {
 			delayMicroseconds(10);
 		}
 	
-		// colocando todos os inputs como '0'
-		for (int pin = I0; pin <= I7; pin++) digitalWrite(pin, LOW);
+		// Setting all inputs to '0'.
+		for (int pin = I0; pin <= I7; pin++)
+			digitalWrite(pin, LOW);
 	
-		// selecionando o dígito correspondente a este EEPROM e colocando os inputs relativos ao dígito como '1'
-		switch ((int)(i % 10L)) { // unidade
-		//switch ((int)((i % 100L)) / 10L) { // dezena
-		//switch ((int)((i % 1000L)) / 100L) { // centena
-		//switch ((int)((i % 10000L)) / 1000L) { // milhar
-		//switch ((int)(i / 10000L)) { // dezena de milhar
-
+		// Selecting the digit corresponding to this EEPROM and setting the inputs relative to this digit to '1'.
+		switch ((int)(i % 10L)) // units
+		//switch ((int)((i % 100L)) / 10L) // tens
+		//switch ((int)((i % 1000L)) / 100L) // hundreds
+		//switch ((int)((i % 10000L)) / 1000L) // thousands
+		//switch ((int)(i / 10000L)) // tens of thousands
+		{
 			case 0:
-				// nenhum if se for unidade
-				//if (i > 9L) { // dezena
-				//if (i > 99L) { // centena
-				//if (i > 999L) { // milhar
-				// nunca vai ter zero na dezena de milhar
+				// no 'if' statement if it is units
+				//if (i > 9L) { // tens
+				//if (i > 99L) { // hundreds
+				//if (i > 999L) { // thousands
+				// there will never be a zero on the tens of thousands place (no zeros to the left).
 					digitalWrite(I0, HIGH);
 					digitalWrite(I1, HIGH);
 					digitalWrite(I2, HIGH);
@@ -155,20 +159,21 @@ void setup() {
 				break;
 		}
 
-		// pulso de gravação
+		// Recording pulse.
 		delayMicroseconds(50);
 		digitalWrite(REC, LOW);
-		delayMicroseconds(100); // 100 uS pulse
+		delayMicroseconds(100); // 100 uS pulse.
 		digitalWrite(REC, HIGH);
 		delayMicroseconds(50);
 	}
 
-	// acende o led continuamente por 3 segundos pra indicar que terminou
+	// Turns LED on continuously for 3 seconds to indicate that programming is finished.
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(3000);
 }
 
-void loop() {
+void loop()
+{
 	digitalWrite(LED_BUILTIN, HIGH);
 	delay(200);
 	digitalWrite(LED_BUILTIN, LOW);
